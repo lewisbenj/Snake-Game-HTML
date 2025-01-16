@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title></title>
+  <style>
+  html, body {
+    height: 100%;
+    margin: 0;
+  }
+
+  body {
+    background: black;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  canvas {
+    border: 1px solid white;
+  }
+  </style>
+</head>
+<body>
+<canvas width="400" height="400" id="game"></canvas>
+<script>
+var canvas = document.getElementById('game');
+var context = canvas.getContext('2d');
+
+var grid = 16;
+var count = 0;
+  
+var snake = {
+  x: 160,
+  y: 160,
+  
+  // vận tốc của rắn. di chuyển một chiều dài lưới mỗi khung hình theo hướng x hoặc y
+  dx: grid,
+  dy: 0,
+  
+  // theo dõi tất cả các lưới mà cơ thể con rắn chiếm giữ
+  cells: [],
+  
+  // chiều dài của con rắn. lớn lên khi ăn táo
+  maxCells: 4
+};
+var apple = {
+  x: 320,
+  y: 320
+};
+
+// lấy số nguyên ngẫu nhiên trong một phạm vi cụ thể
+function getRandomInt(min, max) {
+  return Math.floor(Math.random() * (max - min)) + min;
+}
+
+// vòng lặp trò chơi
+function loop() {
+  requestAnimationFrame(loop);
+
+  // vòng lặp trò chơi chậm xuống còn 15 khung hình/giây thay vì 60 (60/15 = 4)
+  if (++count < 4) {
+    return;
+  }
+
+  count = 0;
+  context.clearRect(0,0,canvas.width,canvas.height);
+
+  // di chuyển con rắn bằng vận tốc của nó
+  snake.x += snake.dx;
+  snake.y += snake.dy;
+
+  // quấn vị trí con rắn theo chiều ngang trên cạnh màn hình
+  if (snake.x < 0) {
+    snake.x = canvas.width - grid;
+  }
+  else if (snake.x >= canvas.width) {
+    snake.x = 0;
+  }
+  
+  // quấn vị trí con rắn theo chiều dọc trên mép màn hình
+  if (snake.y < 0) {
+    snake.y = canvas.height - grid;
+  }
+  else if (snake.y >= canvas.height) {
+    snake.y = 0;
+  }
+
+  // theo dõi xem con rắn đã ở đâu. phía trước của mảng luôn là phần đầu
+  snake.cells.unshift({x: snake.x, y: snake.y});
+
+  // loại bỏ các tế bào khi chúng ta di chuyển ra khỏi chúng
+  if (snake.cells.length > snake.maxCells) {
+    snake.cells.pop();
+  }
+
+  // vẽ quả táo
+  context.fillStyle = 'red';
+  context.fillRect(apple.x, apple.y, grid-1, grid-1);
+
+  // vẽ con rắn từng ô một
+  context.fillStyle = 'green';
+  snake.cells.forEach(function(cell, index) {
+    
+    // vẽ nhỏ hơn 1 px so với lưới sẽ tạo hiệu ứng lưới ở thân con rắn để bạn có thể thấy nó dài bao nhiêu
+    context.fillRect(cell.x, cell.y, grid-1, grid-1);  
+
+    // rắn ăn táo
+    if (cell.x === apple.x && cell.y === apple.y) {
+      snake.maxCells++;
+
+      // canvas có kích thước 400x400 là lưới 25x25
+      apple.x = getRandomInt(0, 25) * grid;
+      apple.y = getRandomInt(0, 25) * grid;
+    }
+
+    // kiểm tra xung đột với tất cả các ô sau ô này (sắp xếp bong bóng đã sửa đổi)
+    for (var i = index + 1; i < snake.cells.length; i++) {
+      
+      // con rắn chiếm không gian giống như một bộ phận cơ thể. thiết lập lại trò chơi
+      if (cell.x === snake.cells[i].x && cell.y === snake.cells[i].y) {
+        snake.x = 160;
+        snake.y = 160;
+        snake.cells = [];
+        snake.maxCells = 4;
+        snake.dx = grid;
+        snake.dy = 0;
+
+        apple.x = getRandomInt(0, 25) * grid;
+        apple.y = getRandomInt(0, 25) * grid;
+      }
+    }
+  });
+}
+
+// nghe các sự kiện bàn phím để di chuyển con rắn
+document.addEventListener('keydown', function(e) {
+ // ngăn chặn con rắn tự quay lại bằng cách kiểm tra xem nó có 
+  // chưa di chuyển trên cùng một trục (nhấn trái trong khi di chuyển
+  // trái sẽ không làm gì cả và nhấn phải trong khi di chuyển sang trái
+  // không nên để bạn va chạm với chính cơ thể mình)
+  
+  // phím mũi tên trái
+  if (e.which === 37 && snake.dx === 0) {
+    snake.dx = -grid;
+    snake.dy = 0;
+  }
+  // phím mũi tên chỉ lên
+  else if (e.which === 38 && snake.dy === 0) {
+    snake.dy = -grid;
+    snake.dx = 0;
+  }
+  // phím mũi tên phải
+  else if (e.which === 39 && snake.dx === 0) {
+    snake.dx = grid;
+    snake.dy = 0;
+  }
+  // phím mũi tên xuống
+  else if (e.which === 40 && snake.dy === 0) {
+    snake.dy = grid;
+    snake.dx = 0;
+  }
+});
+
+// CHƠI THÔIIIIIIIIIII
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
+
+<!--Facebook: https://www.facebook.com/nguyen.nguyenvo.714/-->
+<!--Github: https://github.com/lewisbenj-->
+<!--Discord: discord.com/invite/camelia-->
